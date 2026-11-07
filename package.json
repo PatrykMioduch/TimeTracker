@@ -1,0 +1,26 @@
+{
+  "name": "timetracker",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "types": "wrangler types",
+    "typecheck": "tsc",
+    "test": "vitest run",
+    "db:migrate:local": "wrangler d1 migrations apply timetracker --local",
+    "db:migrate:remote": "wrangler d1 migrations apply timetracker --remote"
+  },
+  "license": "UNLICENSED",
+  "type": "module",
+  "dependencies": {
+    "hono": "^4.13.14"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.4.7",
+    "@cloudflare/workers-types": "^5.20261026.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.152.0"
+  },
+  "private": true
+}
