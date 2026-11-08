@@ -102,3 +102,52 @@ export function formatDuration(sec: number): string {
 export function formatHours(sec: number): string {
   return (sec / 3600).toFixed(2);
 }
+
+/** Dodaje dni do daty YYYY-MM-DD. */
+export function addDays(date: string, days: number): string {
+  const [y, m, d] = date.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + days));
+  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`;
+}
+
+/** 0 = poniedziałek … 6 = niedziela */
+export function weekday(date: string): number {
+  const [y, m, d] = date.split("-").map(Number);
+  return (new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7;
+}
+
+/** Tydzień pon–niedz zawierający datę. offset -1 = poprzedni tydzień. */
+export function weekRange(date: string, offset = 0): { from: string; to: string } {
+  const from = addDays(date, -weekday(date) + offset * 7);
+  return { from, to: addDays(from, 6) };
+}
+
+/** Rok zawierający datę. offset -1 = poprzedni rok. */
+export function yearRange(date: string, offset = 0): { from: string; to: string } {
+  const y = Number(date.slice(0, 4)) + offset;
+  return { from: `${y}-01-01`, to: `${y}-12-31` };
+}
+
+const DAYS_SHORT = ["pon.", "wt.", "śr.", "czw.", "pt.", "sob.", "niedz."];
+const MONTHS_GEN = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
+export const MONTHS_NOM = ["styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipiec", "sierpień", "wrzesień", "październik", "listopad", "grudzień"];
+
+/** "pt., 6 lis" */
+export function shortDate(date: string): string {
+  const [, m, d] = date.split("-").map(Number);
+  return `${DAYS_SHORT[weekday(date)]}, ${d} ${MONTHS_GEN[m - 1]}`;
+}
+
+/** "Dziś" / "Wczoraj" / "pt., 6 lis" (+ rok, gdy inny niż bieżący) */
+export function dayLabel(date: string, today: string): string {
+  if (date === today) return "Dziś";
+  if (date === addDays(today, -1)) return "Wczoraj";
+  return shortDate(date) + (date.slice(0, 4) !== today.slice(0, 4) ? ` ${date.slice(0, 4)}` : "");
+}
+
+/** "3 – 9 lis" / "27 paź – 2 lis" */
+export function rangeLabel(from: string, to: string): string {
+  const [, fm, fd] = from.split("-").map(Number);
+  const [, tm, td] = to.split("-").map(Number);
+  return fm === tm ? `${fd} – ${td} ${MONTHS_GEN[tm - 1]}` : `${fd} ${MONTHS_GEN[fm - 1]} – ${td} ${MONTHS_GEN[tm - 1]}`;
+}

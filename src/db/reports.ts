@@ -21,7 +21,7 @@ export async function reportEntries(db: D1Database, f: ReportFilter): Promise<Ti
   const w = where(f);
   const { results } = await db
     .prepare(
-      `SELECT e.*, p.name AS project_name, u.login AS user_login
+      `SELECT e.*, p.name AS project_name, p.color AS project_color, u.login AS user_login
          FROM time_entries e
          JOIN projects p ON p.id = e.project_id
          JOIN users u ON u.id = e.user_id
@@ -52,3 +52,24 @@ export const sumByProject = (db: D1Database, f: ReportFilter) =>
 export const sumByUser = (db: D1Database, f: ReportFilter) =>
   sumBy(db, f, "u.login", "JOIN users u ON u.id = e.user_id", "total_sec DESC");
 export const sumByDay = (db: D1Database, f: ReportFilter) => sumBy(db, f, "e.entry_date", "", "key");
+
+export type IdSum = { id: number; key: string; total_sec: number; n: number; color?: string };
+
+async function sumById(db: D1Database, f: ReportFilter, idExpr: string, keyExpr: string, join: string, extra = ""): Promise<IdSum[]> {
+  const w = where(f);
+  const { results } = await db
+    .prepare(
+      `SELECT ${idExpr} AS id, ${keyExpr} AS key${extra}, SUM(e.duration_sec) AS total_sec, COUNT(*) AS n
+         FROM time_entries e ${join}
+        WHERE ${w.sql}
+        GROUP BY ${idExpr} ORDER BY total_sec DESC`,
+    )
+    .bind(...w.args)
+    .all<IdSum>();
+  return results;
+}
+
+export const sumProjectsWithId = (db: D1Database, f: ReportFilter) =>
+  sumById(db, f, "e.project_id", "p.name", "JOIN projects p ON p.id = e.project_id", ", p.color AS color");
+export const sumUsersWithId = (db: D1Database, f: ReportFilter) =>
+  sumById(db, f, "e.user_id", "u.login", "JOIN users u ON u.id = e.user_id");

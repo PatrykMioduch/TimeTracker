@@ -63,3 +63,63 @@ export async function setMembers(db: D1Database, projectId: number, userIds: num
   }
   await db.batch(stmts);
 }
+
+/** Suma czasu (zakończone wpisy) per projekt w zakresie dat; userId zawęża do jednej osoby. */
+export async function projectTotals(db: D1Database, from: string, to: string, userId?: number): Promise<Map<number, number>> {
+  const { results } = await db
+    .prepare(
+      `SELECT project_id, SUM(duration_sec) AS total FROM time_entries
+        WHERE entry_date BETWEEN ? AND ? AND (ended_at IS NOT NULL OR started_at IS NULL)
+          ${userId ? "AND user_id = ?" : ""}
+        GROUP BY project_id`,
+    )
+    .bind(...(userId ? [from, to, userId] : [from, to]))
+    .all<{ project_id: number; total: number }>();
+  return new Map(results.map((r) => [r.project_id, r.total]));
+}
+
+export async function saveProject(db: D1Database, id: number, p: { name: string; description: string; color: string; active: number }): Promise<void> {
+  await db
+    .prepare("UPDATE projects SET name = ?, description = ?, color = ?, active = ? WHERE id = ?")
+    .bind(p.name, p.description, p.color, p.active, id)
+    .run();
+}
+
+export async function setProjectColor(db: D1Database, id: number, color: string): Promise<void> {
+  await db.prepare("UPDATE projects SET color = ? WHERE id = ?").bind(color, id).run();
+}
+
+export async function addMember(db: D1Database, projectId: number, userId: number): Promise<void> {
+  await db.prepare("INSERT OR IGNORE INTO project_members (project_id, user_id) VALUES (?, ?)").bind(projectId, userId).run();
+}
+
+/** Usuwa projekt razem z jego wpisami czasu i przypisaniami. */
+export async function deleteProject(db: D1Database, id: number): Promise<void> {
+  await db.batch([
+    db.prepare("DELETE FROM time_entries WHERE project_id = ?").bind(id),
+    db.prepare("DELETE FROM project_members WHERE project_id = ?").bind(id),
+    db.prepare("DELETE FROM projects WHERE id = ?").bind(id),
+  ]);
+}
+
+export async function projectEntryStats(db: D1Database, id: number): Promise<{ n: number; total: number }> {
+  return (
+    (await db
+      .prepare("SELECT COUNT(*) AS n, COALESCE(SUM(duration_sec), 0) AS total FROM time_entries WHERE project_id = ?")
+      .bind(id)
+      .first<{ n: number; total: number }>()) ?? { n: 0, total: 0 }
+  );
+}
+
+/** Przypisane osoby (bez admina) dla każdego projektu. */
+export async function membersByProject(db: D1Database): Promise<Map<number, string[]>> {
+  const { results } = await db
+    .prepare(
+      `SELECT m.project_id, u.login FROM project_members m JOIN users u ON u.id = m.user_id
+        WHERE u.active = 1 ORDER BY u.login`,
+    )
+    .all<{ project_id: number; login: string }>();
+  const map = new Map<number, string[]>();
+  for (const r of results) map.set(r.project_id, [...(map.get(r.project_id) ?? []), r.login]);
+  return map;
+}
