@@ -6,11 +6,14 @@ Prosty klon Clockify na Cloudflare Workers + D1. Projekty, przypisani użytkowni
 
 ```sh
 npm install
+cp wrangler.example.jsonc wrangler.jsonc   # uzupełnij database_id, domenę, adresy e-mail
 npm run db:migrate:local
 npm run dev          # http://localhost:8787
 ```
 
 Admin logowany z pliku `.dev.vars` (lokalnie): `ADMIN_LOGIN`, `ADMIN_PASSWORD`.
+
+`wrangler.jsonc` jest w `.gitignore` (zawiera `database_id`, domenę i adresy e-mail konkretnej instalacji). Szablon: `wrangler.example.jsonc`.
 
 ## Testy
 

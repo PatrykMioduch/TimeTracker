@@ -5,14 +5,14 @@
   "compatibility_date": "2026-10-20",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
-  // Własna domena: deploy sam tworzy rekord DNS i certyfikat (strefa mioduch.com musi być aktywna)
-  "routes": [{ "pattern": "tracker.mioduch.com", "custom_domain": true }],
+  // Własna domena: deploy sam tworzy rekord DNS i certyfikat (strefa example.com musi być aktywna)
+  "routes": [{ "pattern": "tracker.example.com", "custom_domain": true }],
   "vars": {
     "APP_TZ": "Europe/Warsaw",
     // Odbiorca tygodniowego raportu
-    "REPORT_TO": "patryk.mioduch@gmail.com",
+    "REPORT_TO": "admin@example.com",
     // Nadawca: adres w domenie dodanej do Cloudflare Email Sending (wrangler email sending enable <domena>)
-    "REPORT_FROM": "timetracker@mioduch.com"
+    "REPORT_FROM": "timetracker@example.com"
   },
   // Poniedziałek 06:00 UTC = 07:00 CET / 08:00 CEST
   "triggers": { "crons": ["0 6 * * 1"] },
@@ -21,7 +21,7 @@
     {
       "binding": "DB",
       "database_name": "timetracker",
-      "database_id": "c960ef8d-ddf0-4b37-84f1-249589d392e7",
+      "database_id": "<wynik: npx wrangler d1 create timetracker>",
       "migrations_dir": "./migrations"
     }
   ]

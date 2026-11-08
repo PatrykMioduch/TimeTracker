@@ -1,6 +1,6 @@
 # TimeTracker (klon Clockify) — plan budowy
 
-Stan (2026-10-26): kroki 1–5 zrobione, 35 testów przechodzi, Worker wdrożony na https://timetracker.patryk-mioduch.workers.dev. Do zrobienia: sekrety ADMIN_LOGIN i ADMIN_PASSWORD (krok 6).
+Stan (2026-10-26): kroki 1–5 zrobione, 35 testów przechodzi, Worker wdrożony. Do zrobienia: sekrety ADMIN_LOGIN i ADMIN_PASSWORD (krok 6).
 
 ## 1. Decyzje
 
