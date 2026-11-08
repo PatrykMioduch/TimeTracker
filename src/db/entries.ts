@@ -1,6 +1,6 @@
 import type { TimeEntry, User } from "../types";
 
-const SELECT = `SELECT e.*, p.name AS project_name, u.login AS user_login
+const SELECT = `SELECT e.*, p.name AS project_name, p.color AS project_color, u.login AS user_login
                   FROM time_entries e
                   JOIN projects p ON p.id = e.project_id
                   JOIN users u ON u.id = e.user_id`;
@@ -80,4 +80,27 @@ export async function stopTimer(db: D1Database, userId: number, endedAt: string)
 
 export async function deleteEntry(db: D1Database, id: number): Promise<void> {
   await db.prepare("DELETE FROM time_entries WHERE id = ?").bind(id).run();
+}
+
+export async function listForUser(db: D1Database, userId: number, limit = 300): Promise<TimeEntry[]> {
+  const { results } = await db
+    .prepare(`${SELECT} WHERE e.user_id = ? AND (e.ended_at IS NOT NULL OR e.started_at IS NULL)
+              ORDER BY e.entry_date DESC, COALESCE(e.started_at, e.created_at) DESC, e.id DESC LIMIT ?`)
+    .bind(userId, limit)
+    .all<TimeEntry>();
+  return results;
+}
+
+export async function updateEntry(
+  db: D1Database,
+  id: number,
+  p: { projectId: number; entryDate: string; startedAt: string | null; endedAt: string | null; durationSec: number; note: string },
+): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE time_entries SET project_id = ?, entry_date = ?, started_at = ?, ended_at = ?, duration_sec = ?, note = ?
+        WHERE id = ? AND (ended_at IS NOT NULL OR started_at IS NULL)`,
+    )
+    .bind(p.projectId, p.entryDate, p.startedAt, p.endedAt, p.durationSec, p.note, id)
+    .run();
 }

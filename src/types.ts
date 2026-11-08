@@ -12,6 +12,7 @@ export type Project = {
   name: string;
   description: string;
   active: number;
+  color?: string;
 };
 
 export type TimeEntry = {
@@ -24,6 +25,7 @@ export type TimeEntry = {
   duration_sec: number;
   note: string;
   project_name?: string;
+  project_color?: string;
   user_login?: string;
 };
 
